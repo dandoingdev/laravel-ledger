@@ -3,14 +3,13 @@
  * Created by PhpStorm.
  * User: andre
  * Date: 2017-06-24
- * Time: 1:33 PM
+ * Time: 1:33 PM.
  */
 
-namespace FannyPack\Ledger;
+namespace DanDoingDev\Ledger;
 
-
-use FannyPack\Ledger\Exceptions\InvalidRecipientException;
-use FannyPack\Ledger\Exceptions\InsufficientBalanceException;
+use DanDoingDev\Ledger\Exceptions\InsufficientBalanceException;
+use DanDoingDev\Ledger\Exceptions\InvalidRecipientException;
 use Illuminate\Routing\Router;
 
 class Ledger
@@ -22,7 +21,6 @@ class Ledger
 
     /**
      * Ledger constructor.
-     * @param Router $router
      */
     public function __construct(Router $router)
     {
@@ -30,68 +28,160 @@ class Ledger
     }
 
     /**
-     * debit a ledgerable instance
+     * credit a ledgerable instance.
      *
-     * @param $to
      * @param string $from
-     * @param $amount
-     * @param $reason
+     * @param mixed  $currency
+     * @param mixed  $to
+     * @param mixed  $amount
+     * @param mixed  $reason
+     *
      * @return mixed
      */
-    public function debit($to, $from, $amount, $amount_currency, $reason)
+    public function credit($to, $from, $amount, $currency, $reason)
     {
         $balance = $to->balance();
-        $current_balance_currency = isset($to->current_balance_currency) ? $to->current_balance_currency : Null;
-        
+        $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
+
         $data = [
             'money_from' => $from,
-            'debit' => 1, 
-            'reason' => $reason, 
-            'amount' => $amount, 
-            'amount_currency' => $amount_currency,
-            'current_balance' => (float)$balance + (float)$amount,
-            'current_balance_currency' => $current_balance_currency
+            'credit' => 1,
+            'reason' => $reason,
+            'amount' => $amount,
+            'currency' => $currency,
+            'balance' => (float) $balance + (float) $amount,
+            'balance_currency' => $balance_currency,
         ];
 
         return $this->log($to, $data);
     }
 
     /**
-     * credit a ledgerable instance
+     * debit a ledgerable instance.
      *
-     * @param $from
-     * @param string $to
-     * @param $amount
-     * @param $reason
+     * @param mixed $from
+     * @param mixed $to
+     *
      * @return mixed
+     *
      * @throws InsufficientBalanceException
      */
-    public function credit($from, $to, $amount, $amount_currency="UGX", $reason)
+    public function debit($from, $to, float $amount, string $currency, string $reason = null)
     {
         $balance = $from->balance();
-        $current_balance_currency = isset($from->current_balance_currency) ? $from->current_balance_currency : Null;
+        $balance_currency = isset($from->balance_currency) ? $from->balance_currency : null;
 
-        if ((float)$balance == 0 || (float)$amount > (float)$balance )
-            throw new InsufficientBalanceException("Insufficient balance");
-        
+        if (0 == (float) $balance || (float) $amount > (float) $balance) {
+            throw new InsufficientBalanceException('Insufficient balance');
+        }
+
         $data = [
             'money_to' => $to,
-            'credit' => 1, 
-            'reason' => $reason, 
+            'reason' => $reason,
             'amount' => $amount,
-            'amount_currency' => $amount_currency, 
-            'current_balance' => (float)$balance - (float)$amount,
-            'current_balance_currency' => $current_balance_currency
+            'currency' => $currency,
+            'balance' => (float) $balance - (float) $amount,
+            'balance_currency' => $balance_currency,
         ];
 
         return $this->log($from, $data);
     }
 
     /**
-     * persist an entry to the ledger
-     * 
-     * @param $ledgerable
-     * @param array $data
+     * topup a ledgerable instance.
+     *
+     * @param string     $to
+     * @param mixed      $currency
+     * @param mixed      $amount
+     * @param null|mixed $reason
+     * @param mixed      $from
+     *
+     * @return mixed
+     *
+     * @throws InsufficientBalanceException
+     */
+    public function topUp($to, $amount, $currency, $reason = null)
+    {
+        $balance = $to->balance();
+        $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
+
+        $data = [
+            'money_to' => $to,
+            'credit' => 1,
+            'reason' => $reason,
+            'amount' => $amount,
+            'currency' => $currency,
+            'balance' => (float) $balance + (float) $amount,
+            'balance_currency' => $balance_currency,
+        ];
+
+        return $this->log($to, $data);
+    }
+
+    /**
+     * balance of a ledgerable instance.
+     *
+     * @param mixed $ledgerable
+     *
+     * @return float
+     */
+    public function balance($ledgerable)
+    {
+        $credits = $ledgerable->credits()->sum('amount');
+        $debits = $ledgerable->debits()->sum('amount');
+
+        return $credits - $debits;
+    }
+
+    /**
+     * transfer an amount to each ledgerable instance.
+     *
+     * @param string $reason
+     * @param mixed  $currency
+     * @param mixed  $from
+     * @param mixed  $to
+     * @param mixed  $amount
+     *
+     * @return mixed
+     *
+     * @throws InvalidRecipientException
+     * @throws InsufficientBalanceException
+     */
+    public function transfer($from, $to, $amount, $currency, $reason = 'funds transfer')
+    {
+        if (!is_array($to)) {
+            return $this->transferOnce($from, $to, $amount, $reason);
+        }
+
+        $total_amount = (float) $amount * count($to);
+        if ($total_amount > $from->balance()) {
+            throw new InsufficientBalanceException('Insufficient balance');
+        }
+
+        $recipients = [];
+        foreach ($to as $recipient) {
+            array_push($recipients, $this->transferOnce($from, $recipient, $amount, $currency, $reason));
+        }
+
+        return $recipients;
+    }
+
+    /**
+     * register routes for ledger api access.
+     */
+    public function routes()
+    {
+        $this->router->group(['namespace' => 'DanDoingDev\Ledger\Http\Controllers', 'prefix' => 'entries'], function () {
+            $this->router->get('ledger', 'LedgerController@index');
+            $this->router->get('ledger/{entry_id}', 'LedgerController@show');
+        });
+    }
+
+    /**
+     * persist an entry to the ledger.
+     *
+     * @param mixed $ledgerable
+     *
      * @return mixed
      */
     protected function log($ledgerable, array $data)
@@ -100,76 +190,27 @@ class Ledger
     }
 
     /**
-     * balance of a ledgerable instance
-     * 
-     * @param $ledgerable
-     * @return float
-     */
-    public function balance($ledgerable)
-    {
-        $credits = $ledgerable->credits()->sum('amount');
-        $debits = $ledgerable->debits()->sum('amount');
-        $balance = $debits - $credits;
-        return $balance;
-    }
-
-    /**
-     * transfer an amount to each ledgerable instance
-     * 
-     * @param $from
-     * @param $to
-     * @param $amount
-     * @param string $reason
-     * @return mixed
-     * @throws InvalidRecipientException
-     * @throws InsufficientBalanceException
-     */
-    public function transfer($from, $to, $amount, $amount_currency="UGX", $reason = "funds transfer")
-    {
-        if (!is_array($to))
-            return $this->transferOnce($from, $to, $amount, $reason);
-
-        $total_amount = (float)$amount * count($to);
-        if ($total_amount > $from->balance())
-            throw new InsufficientBalanceException("Insufficient balance");
-        
-        $recipients = [];
-        foreach ($to as $recipient)
-        {
-            array_push($recipients, $this->transferOnce($from, $recipient, $amount, $amount_currency, $reason));
-        }
-        
-        return $recipients;
-    }
-
-    /**
-     * transfer an amount to one ledgerable instance
+     * transfer an amount to one ledgerable instance.
      *
-     * @param $from
-     * @param $to
-     * @param $amount
-     * @param $reason
+     * @param mixed      $currency
+     * @param mixed      $from
+     * @param mixed      $to
+     * @param mixed      $amount
+     * @param null|mixed $reason
+     *
      * @return mixed
+     *
      * @throws InsufficientBalanceException
      * @throws InvalidRecipientException
      */
-    protected function transferOnce($from, $to, $amount, $amount_currency="UGX", $reason)
+    protected function transferOnce($from, $to, $amount, $currency = 'USD', $reason = null)
     {
-        if (get_class($from) == get_class($to) && $from->id == $to->id)
-            throw new InvalidRecipientException("Source and recipient cannot be the same object");
+        if (get_class($from) == get_class($to) && $from->id == $to->id) {
+            throw new InvalidRecipientException('Source and recipient cannot be the same object');
+        }
 
-        $this->credit($from, $to->name, $amount, $amount_currency ,$reason);
-        return $this->debit($to, $from->name, $amount, $amount_currency, $reason);
-    }
+        $this->credit($from, $to->name, $amount, $currency, $reason);
 
-    /**
-     * register routes for ledger api access
-     */
-    public function routes()
-    {
-        $this->router->group(['namespace' => 'FannyPack\Ledger\Http\Controllers', 'prefix' => 'entries'], function() {
-            $this->router->get('ledger', 'LedgerController@index');
-            $this->router->get('ledger/{entry_id}', 'LedgerController@show');
-        });
+        return $this->debit($to, $from->name, $amount, $currency, $reason);
     }
 }

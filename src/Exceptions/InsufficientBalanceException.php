@@ -6,7 +6,7 @@
  * Time: 3:06 PM
  */
 
-namespace FannyPack\Ledger\Exceptions;
+namespace DanDoingDev\Ledger\Exceptions;
 
 
 class InsufficientBalanceException extends \Exception

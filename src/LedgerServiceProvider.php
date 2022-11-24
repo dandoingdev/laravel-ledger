@@ -1,6 +1,6 @@
 <?php
 
-namespace FannyPack\Ledger;
+namespace DanDoingDev\Ledger;
 
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;

@@ -6,7 +6,7 @@
  * Time: 4:32 PM
  */
 
-namespace FannyPack\Ledger\Exceptions;
+namespace DanDoingDev\Ledger\Exceptions;
 
 
 class InvalidRecipientException extends \Exception

@@ -1,35 +1,60 @@
 {
-    "name": "fannypack/ledger",
-    "description": "ledger implementation for laravel",
-    "keywords": ["library", "laravel", "php", "ledger"],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Mpande Andrew",
-            "email": "andrewmvp007@gmail.com"
-        }
-    ],
-    "minimum-stability": "dev",
-    "autoload": {
-        "psr-4": {
-            "FannyPack\\Ledger\\": "src/"
-        }
+  "name": "dandoingdev/ledger",
+  "description": "ledger implementation for laravel",
+  "keywords": [
+    "library",
+    "laravel",
+    "php",
+    "ledger"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dan MH",
+      "homepage": "http://github.com/dandoingdev"
     },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "FannyPack\\Ledger\\LedgerServiceProvider"
-            ],
-            "aliases": {
-                "Ledger": "FannyPack\\Ledger\\Facades\\Ledger"
-            }
-        }
-    },
-    "require": {
-        "illuminate/database": "~5.4.0|~5.5.0|~5.6.0|~5.7.0|~5.8.0",
-        "illuminate/support": "~5.4.0|~5.5.0|~5.6.0|~5.7.0|~5.8.0",
-        "illuminate/routing": "~5.4.0|~5.5.0|~5.6.0|~5.7.0|~5.8.0",
-        "illuminate/validation": "~5.4.0|~5.5.0|~5.6.0|~5.7.0|~5.8.0",
-        "nesbot/carbon": "^1.26.3 || ^2.0"
+    {
+      "name": "Mpande Andrew",
+      "email": "andrewmvp007@gmail.com"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "DanDoingDev\\Ledger\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "DanDoingDev\\Ledger\\LedgerServiceProvider"
+      ],
+      "aliases": {
+        "Ledger": "DanDoingDev\\Ledger\\Facades\\Ledger"
+      }
+    }
+  },
+  "require": {
+    "php": "^8.0",
+    "illuminate/config": "^8.0 || ^9.0",
+    "illuminate/database": "^8.69 || ^9.27",
+    "illuminate/support": "^8.0 || ^9.0",
+    "illuminate/routing": "^8.0 || ^9.0",
+    "illuminate/validation": "^8.0 || ^9.0",
+    "nesbot/carbon": "^2.0"
+  },
+  "require-dev": {
+    "ext-json": "*",
+    "orchestra/testbench": "^6.23 || ^7.0",
+    "pestphp/pest": "^1.20"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/pest"
+  }
 }

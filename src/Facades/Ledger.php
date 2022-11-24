@@ -6,7 +6,7 @@
  * Time: 2:17 PM
  */
 
-namespace FannyPack\Ledger\Facades;
+namespace DanDoingDev\Ledger\Facades;
 
 
 use Illuminate\Support\Facades\Facade;
@@ -20,6 +20,6 @@ class Ledger extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return \FannyPack\Ledger\Ledger::class;
+        return \DanDoingDev\Ledger\Ledger::class;
     }
 }
