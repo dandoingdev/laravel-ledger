@@ -22,7 +22,7 @@ class Ledger
     public function credit(Model $to, Model $from, float $amount, float $currency, float $reason)
     {
         $balance = $to->balance();
-        $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
+        $balanceCurrency = isset($to->balance_currency) ? $to->balance_currency : null;
 
         $data = [
             'money_from' => $from,
@@ -31,7 +31,7 @@ class Ledger
             'amount' => $amount,
             'currency' => $currency,
             'balance' => (float) $balance + (float) $amount,
-            'balance_currency' => $balance_currency,
+            'balance_currency' => $balanceCurrency,
         ];
 
         return $this->log($to, $data);
@@ -50,7 +50,7 @@ class Ledger
     public function debit(Model $from, Model $to, float $amount, string $currency, string $reason = null)
     {
         $balance = $from->balance();
-        $balance_currency = isset($from->balance_currency) ? $from->balance_currency : null;
+        $balanceCurrency = isset($from->balance_currency) ? $from->balance_currency : null;
 
         if (0 == (float) $balance || (float) $amount > (float) $balance) {
             throw new InsufficientBalanceException('Insufficient balance');
@@ -62,7 +62,7 @@ class Ledger
             'amount' => $amount,
             'currency' => $currency,
             'balance' => (float) $balance - (float) $amount,
-            'balance_currency' => $balance_currency,
+            'balance_currency' => $balanceCurrency,
         ];
 
         return $this->log($from, $data);
@@ -84,7 +84,7 @@ class Ledger
     public function topUp(Model $to, float $amount, string $currency, string $reason = null)
     {
         $balance = $to->balance();
-        $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
+        $balanceCurrency = isset($to->balance_currency) ? $to->balance_currency : null;
 
         $data = [
             'money_to' => $to,
@@ -93,7 +93,7 @@ class Ledger
             'amount' => $amount,
             'currency' => $currency,
             'balance' => (float) $balance + (float) $amount,
-            'balance_currency' => $balance_currency,
+            'balance_currency' => $balanceCurrency,
         ];
 
         return $this->log($to, $data);
