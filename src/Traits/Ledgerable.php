@@ -10,6 +10,7 @@ namespace DanDoingDev\Ledger\Traits;
 
 use DanDoingDev\Ledger\Facades\Ledger;
 use DanDoingDev\Ledger\LedgerEntry;
+use Illuminate\Database\Eloquent\Model;
 
 trait Ledgerable
 {
@@ -68,7 +69,7 @@ trait Ledgerable
      *
      * @return mixed
      */
-    public function debit($from, $amount, $currency = 'USD', $reason = null)
+    public function debit(Model $from, $amount, $currency = 'USD', $reason = null)
     {
         return Ledger::debit($this, $from, $amount, $currency, $reason);
     }
@@ -83,7 +84,7 @@ trait Ledgerable
      *
      * @return mixed
      */
-    public function credit($to, $amount, $currency = 'USD', $reason = null)
+    public function credit(Model $to, $amount, $currency = 'USD', $reason = null)
     {
         return Ledger::credit($this, $to, $amount, $currency, $reason);
     }
@@ -108,7 +109,7 @@ trait Ledgerable
      *
      * @return mixed
      */
-    public function transfer($to, $amount, $currency = 'USD', $reason = null)
+    public function transfer(Model $to, $amount, $currency = 'USD', $reason = null)
     {
         return Ledger::transfer($this, $to, $amount, $currency, $reason);
     }

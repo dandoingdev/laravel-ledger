@@ -1,32 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: andre
- * Date: 2017-06-24
- * Time: 1:33 PM.
- */
 
 namespace DanDoingDev\Ledger;
 
 use DanDoingDev\Ledger\Exceptions\InsufficientBalanceException;
 use DanDoingDev\Ledger\Exceptions\InvalidRecipientException;
-use Illuminate\Routing\Router;
+use Illuminate\Database\Eloquent\Model;
 
 class Ledger
 {
-    /**
-     * @var Router
-     */
-    protected $router;
-
-    /**
-     * Ledger constructor.
-     */
-    public function __construct(Router $router)
-    {
-        $this->router = $router;
-    }
-
     /**
      * credit a ledgerable instance.
      *
@@ -38,7 +19,7 @@ class Ledger
      *
      * @return mixed
      */
-    public function credit($to, $from, $amount, $currency, $reason)
+    public function credit(Model $to, Model $from, float $amount, float $currency, float $reason)
     {
         $balance = $to->balance();
         $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
@@ -66,7 +47,7 @@ class Ledger
      *
      * @throws InsufficientBalanceException
      */
-    public function debit($from, $to, float $amount, string $currency, string $reason = null)
+    public function debit(Model $from, Model $to, float $amount, string $currency, string $reason = null)
     {
         $balance = $from->balance();
         $balance_currency = isset($from->balance_currency) ? $from->balance_currency : null;
@@ -100,7 +81,7 @@ class Ledger
      *
      * @throws InsufficientBalanceException
      */
-    public function topUp($to, $amount, $currency, $reason = null)
+    public function topUp(Model $to, float $amount, string $currency, string $reason = null)
     {
         $balance = $to->balance();
         $balance_currency = isset($to->balance_currency) ? $to->balance_currency : null;
@@ -125,7 +106,7 @@ class Ledger
      *
      * @return float
      */
-    public function balance($ledgerable)
+    public function balance(Model $ledgerable)
     {
         $credits = $ledgerable->credits()->sum('amount');
         $debits = $ledgerable->debits()->sum('amount');
@@ -147,7 +128,7 @@ class Ledger
      * @throws InvalidRecipientException
      * @throws InsufficientBalanceException
      */
-    public function transfer($from, $to, $amount, $currency, $reason = 'funds transfer')
+    public function transfer(Model $from, Model $to, float $amount, $currency, $reason = 'funds transfer')
     {
         if (!is_array($to)) {
             return $this->transferOnce($from, $to, $amount, $reason);
@@ -167,24 +148,13 @@ class Ledger
     }
 
     /**
-     * register routes for ledger api access.
-     */
-    public function routes()
-    {
-        $this->router->group(['namespace' => 'DanDoingDev\Ledger\Http\Controllers', 'prefix' => 'entries'], function () {
-            $this->router->get('ledger', 'LedgerController@index');
-            $this->router->get('ledger/{entry_id}', 'LedgerController@show');
-        });
-    }
-
-    /**
      * persist an entry to the ledger.
      *
      * @param mixed $ledgerable
      *
      * @return mixed
      */
-    protected function log($ledgerable, array $data)
+    protected function log(Model $ledgerable, array $data)
     {
         return $ledgerable->entries()->create($data);
     }
@@ -203,7 +173,7 @@ class Ledger
      * @throws InsufficientBalanceException
      * @throws InvalidRecipientException
      */
-    protected function transferOnce($from, $to, $amount, $currency = 'USD', $reason = null)
+    protected function transferOnce(Model $from, Model $to, float $amount, string $currency = 'USD', string $reason = null)
     {
         if (get_class($from) == get_class($to) && $from->id == $to->id) {
             throw new InvalidRecipientException('Source and recipient cannot be the same object');
